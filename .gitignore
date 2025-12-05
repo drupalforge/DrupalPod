@@ -1,17 +1,24 @@
-# Drupal
-/web/
-/vendor/
-composer.json
-composer.lock
-.editorconfig
-.gitattributes
+# Drupal installation (everything Drupal-related is in docroot/)
+/docroot
 
-# DrupalPod
-.drupalpod_initiated
-src/**/node_modules/
-src/**/package-lock.json
-src/**/out/
-src/**/*.vsix
-src/**/.vscode-test/
-drush/
-.ddev/config.gitpod.yaml
+# Git submodules (dynamically generated - don't commit)
+/.gitmodules
+/repos
+
+# Dependencies managed by Composer (legacy - now in docroot/).
+/recipes
+/vendor
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

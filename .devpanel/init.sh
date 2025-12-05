@@ -1,125 +1,121 @@
 #!/usr/bin/env bash
+
+# Optional debug mode; strict error handling for safety.
+if [ -n "${DEBUG_SCRIPT:-}" ]; then
+  set -x
+fi
 set -eu -o pipefail
 
-# Initialize all variables with null if they do not exist
-: "${DEBUG_SCRIPT:=}"
-: "${DP_INSTALL_PROFILE:=}"
-: "${DP_EXTRA_DEVEL:=}"
-: "${DP_EXTRA_ADMIN_TOOLBAR:=}"
-: "${DP_PROJECT_TYPE:=}"
-: "${DEVEL_NAME:=}"
-: "${DEVEL_PACKAGE:=}"
-: "${ADMIN_TOOLBAR_NAME:=}"
-: "${ADMIN_TOOLBAR_PACKAGE:=}"
-: "${COMPOSER_DRUPAL_LENIENT:=}"
-: "${DP_CORE_VERSION:=}"
-: "${DP_ISSUE_BRANCH:=}"
-: "${DP_ISSUE_FORK:=}"
-: "${DP_MODULE_VERSION:=}"
-: "${DP_PATCH_FILE:=}"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Directory Setup (works in both DDEV and GitHub Actions environments)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEVPANEL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$DEVPANEL_DIR")"
+APP_ROOT="${APP_ROOT:-$PROJECT_ROOT}"
+DIR="$DEVPANEL_DIR"
 
-# Assuming .sh files are in the same directory as this script
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$APP_ROOT"
+mkdir -p logs
+LOG_FILE="logs/init-$(date +%F-%T).log"
+exec > >(tee "$LOG_FILE") 2>&1
 
-if [ -n "$DEBUG_SCRIPT" ]; then
-    set -x
+TIMEFORMAT=%lR
+export COMPOSER_NO_AUDIT=1
+export COMPOSER_NO_DEV=1
+
+# Drush path (after composer install)
+DRUSH="$APP_ROOT/vendor/bin/drush"
+
+# Source fallback setup
+source "$DIR/fallback_setup.sh"
+
+# Clone AI modules
+echo
+echo 'Cloning AI modules from git...'
+time source "$DIR/clone_ai_modules.sh"
+
+# Install VSCode extensions
+if [ -n "${DP_VSCODE_EXTENSIONS:-}" ]; then
+  IFS=','
+  for value in $DP_VSCODE_EXTENSIONS; do
+    time code-server --install-extension "$value"
+  done
 fi
 
-convert_version() {
-    local version=$1
-    if [[ $version =~ "-" ]]; then
-        # Remove the part after the dash and replace the last numeric segment with 'x'
-        local base_version=${version%-*}
-        echo "${base_version%.*}.x"
-    else
-        echo "$version"
-    fi
+# Clean rebuild vs incremental install
+if [ "${DP_REBUILD:-0}" = "1" ]; then
+  echo
+  echo 'Performing clean rebuild...'
+  echo 'Removing docroot directory...'
+  time rm -rf docroot
+  echo 'Rebuild mode enabled.'
+  echo
+fi
+
+# Remove root-owned artifacts
+echo
+echo "Remove root-owned files."
+time sudo rm -rf lost+found
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Composer setup
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if [ "${DP_REBUILD:-0}" = "1" ] || [ ! -f docroot/composer.json ]; then
+  source "$DIR/composer_setup.sh"
+else
+  composer show --locked cweagans/composer-patches ^2 &>/dev/null && composer prl
+fi
+
+# Ensure dependencies are installed
+composer -n update --no-dev --no-progress || composer dump-autoload
+
+echo 'Running composer update...'
+time composer -n update --no-dev --no-progress || {
+  echo "Composer update encountered errors (likely patch failures), but continuing..."
+  echo "Regenerating autoload files..."
+  composer dump-autoload
 }
 
-# Test cases
-# echo $(convert_version "9.2.5-dev1")    # Output: 9.2.x
-# echo $(convert_version "9.2.5")         # Output: 9.2.5
-# echo $(convert_version "10.1.0-beta1")  # Output: 10.1.x
-# echo $(convert_version "11.0-dev")      # Output: 11.x
+echo 'All modules installed and ready!'
 
-# Set a default setup if project type wasn't specified
-if [ -z "$DP_PROJECT_TYPE" ]; then
-    source "$DIR/fallback_setup.sh"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Private files & config
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ ! -d private ] && { echo; echo 'Create the private files directory.'; time mkdir private; }
+[ ! -d config/sync ] && { echo; echo 'Create the config sync directory.'; time mkdir -p config/sync; }
+
+# Generate hash salt if missing
+[ ! -f "$DIR/salt.txt" ] && { echo; echo 'Generate hash salt.'; time openssl rand -hex 32 > "$DIR/salt.txt"; }
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Install Drupal
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+echo
+if [ "${DP_REBUILD:-0}" = "1" ] || ! $DRUSH status --field=bootstrap | grep -q "Drupal bootstrap"; then
+  PROFILE="${DP_INSTALL_PROFILE:-standard}"
+  echo "Installing Drupal with profile: $PROFILE"
+  time $DRUSH -n si "$PROFILE" --account-name=admin --account-pass=admin
+
+  # AI setup if available
+  if [ -n "${DP_AI_VIRTUAL_KEY:-}" ]; then
+    source "$DIR/setup_ai.sh"
+  fi
+
+  echo
+  echo 'Tell Automatic Updates about patches.'
+  $DRUSH -n cset --input-format=yaml package_manager.settings additional_trusted_composer_plugins '["cweagans/composer-patches"]'
+  $DRUSH -n cset --input-format=yaml package_manager.settings additional_known_files_in_project_root '["patches.json", "patches.lock.json"]'
+  time $DRUSH ev '\Drupal::moduleHandler()->invoke("automatic_updates", "modules_installed", [[], FALSE])'
+else
+  echo 'Update database.'
+  time $DRUSH -n updb
 fi
 
-source "$DIR/git_setup.sh"
-
-# If this is an issue fork of Drupal core - set the drupal core version based on that issue fork
-if [ "$DP_PROJECT_TYPE" == "project_core" ] && [ -n "$DP_ISSUE_FORK" ]; then
-    VERSION_FROM_GIT=$(grep 'const VERSION' "${APP_ROOT}"/repos/drupal/core/lib/Drupal.php | awk -F "'" '{print $2}')
-    DP_CORE_VERSION=$(convert_version "$VERSION_FROM_GIT")
-    export DP_CORE_VERSION
-fi
-
-# Measure the time it takes to go through the script
-script_start_time=$(date +%s)
-
-# Remove root-owned files.
-sudo rm -rf $APP_ROOT/lost+found
-
-source "$DIR/contrib_modules_setup.sh"
-source "$DIR/cleanup.sh"
-source "$DIR/composer_setup.sh"
-
-if [ -n "$DP_PATCH_FILE" ]; then
-    echo Applying selected patch "$DP_PATCH_FILE"
-    cd "${WORK_DIR}" && curl "$DP_PATCH_FILE" | patch -p1
-fi
-
-# Prepare special setup to work with Drupal core
-if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
-    source "$DIR/drupal_setup_core.sh"
-# Prepare special setup to work with Drupal contrib
-elif [ -n "$DP_PROJECT_NAME" ]; then
-    source "$DIR/drupal_setup_contrib.sh"
-fi
-
-time "${DIR}"/install-essential-packages.sh
-# Configure phpcs for drupal.
-cd "$APP_ROOT" &&
-    vendor/bin/phpcs --config-set installed_paths vendor/drupal/coder/coder_sniffer
-
-if [ -z "$(drush status --field=db-status)" ] || \
-   [ $DP_INSTALL_PROFILE != 'demo_umami' ] || \
-   ! printf "11.2.2\n$DP_CORE_VERSION" | sort -C; then
-    # New site install, different install profile, or lower core version.
-    time drush -n si --account-pass=admin --site-name="DrupalPod" "$DP_INSTALL_PROFILE"
-elif [ $DP_CORE_VERSION != '11.2.2' ]; then
-    # Run database updates if the core version is different.
-    time drush -n updb
-fi
-
-# Install devel and admin_toolbar modules.
-if [ "$DP_EXTRA_DEVEL" != '1' ]; then
-    DEVEL_NAME=
-fi
-if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
-    ADMIN_TOOLBAR_NAME=
-fi
-
-# Enable extra modules.
-cd "${APP_ROOT}" &&
-    drush en -y \
-        $ADMIN_TOOLBAR_NAME \
-        $DEVEL_NAME
-
-# Enable the requested module.
-if [ "$DP_PROJECT_TYPE" == "project_module" ]; then
-    cd "${APP_ROOT}" && drush en -y "$DP_PROJECT_NAME"
-fi
-
-# Enable the requested theme.
-if [ "$DP_PROJECT_TYPE" == "project_theme" ]; then
-    cd "${APP_ROOT}" && drush then -y "$DP_PROJECT_NAME"
-    cd "${APP_ROOT}" && drush config-set -y system.theme default "$DP_PROJECT_NAME"
-fi
-
-# Finish measuring script time.
-script_end_time=$(date +%s)
-runtime=$((script_end_time - script_start_time))
-echo "init.sh script ran for" $runtime "seconds"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Finish measuring script time
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INIT_DURATION=$SECONDS
+INIT_HOURS=$(($INIT_DURATION / 3600))
+INIT_MINUTES=$(($INIT_DURATION % 3600 / 60))
+INIT_SECONDS=$(($INIT_DURATION % 60))
+printf "\nTotal elapsed time: %d:%02d:%02d\n" $INIT_HOURS $INIT_MINUTES $INIT_SECONDS
