@@ -6,6 +6,9 @@ cd $APP_ROOT
 # For versions without x - add `~` prefix (ie. ~9.2.0)
 d="$DP_CORE_VERSION"
 case $d in
+main)
+    install_version="main-dev@dev"
+    ;;
 *.x)
     install_version="$d"-dev
     ;;
