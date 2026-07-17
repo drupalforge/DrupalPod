@@ -27,10 +27,17 @@ fi
 
 convert_version() {
     local version=$1
-    if [[ $version =~ "-" ]]; then
+    if [ "$version" = "12.x" ]; then
+        echo "main"
+    elif [[ $version =~ "-" ]]; then
         # Remove the part after the dash and replace the last numeric segment with 'x'
         local base_version=${version%-*}
-        echo "${base_version%.*}.x"
+        local converted_version="${base_version%.*}.x"
+        if [ "$converted_version" = "12.x" ]; then
+            echo "main"
+        else
+            echo "$converted_version"
+        fi
     else
         echo "$version"
     fi
