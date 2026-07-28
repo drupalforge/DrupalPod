@@ -15,7 +15,7 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
     # Find if requested core version is dev or stable
     d="$DP_CORE_VERSION"
     case $d in
-    *.x)
+    main|*.x)
         # If dev - use git checkout origin/*
         checkout_type=origin
         ;;
