@@ -23,7 +23,7 @@ chmod +x "${APP_ROOT}"/repos/add-project-as-symlink.sh
 if [ -n "$COMPOSER_DRUPAL_LENIENT" ]; then
     # Add composer_drupal_lenient for modules on Drupal 10
     composer config --no-plugins --merge --json extra.drupal-lenient.allowed-list '["drupal/'"$DP_PROJECT_NAME"'"]'
-    time composer require "$COMPOSER_DRUPAL_LENIENT"
+    time composer require "$COMPOSER_DRUPAL_LENIENT" --no-update
 fi
 # Add the project to composer (it will get the version according to the branch under `/repo/name_of_project`)
-time composer require drupal/"$DP_PROJECT_NAME" --no-interaction --no-install
+time composer require drupal/"$DP_PROJECT_NAME" --no-update

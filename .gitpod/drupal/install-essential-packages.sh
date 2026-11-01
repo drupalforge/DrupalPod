@@ -21,8 +21,13 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
     ADMIN_TOOLBAR_PACKAGE=
 fi
 
-cd "${GITPOD_REPO_ROOT}" && time ddev . composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 -W --no-install
-cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "drupal/coder" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE"
+cd "${GITPOD_REPO_ROOT}" && time ddev . composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
+cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE"
+
+# Require drupal/coder only if no other package already depends on it
+if ! (cd "${GITPOD_REPO_ROOT}" && ddev . composer show "drupal/coder" >/dev/null 2>&1); then
+    cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drupal/coder"
+fi
 
 # Only for Drupal core - apply special patch
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
