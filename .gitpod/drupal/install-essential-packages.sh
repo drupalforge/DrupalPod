@@ -22,7 +22,11 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
 fi
 
 cd "${GITPOD_REPO_ROOT}" && time ddev . composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
-cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "drupal/coder:^8.3.10" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE"
+cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE"
+
+if ! ddev . composer show --installed drupal/coder --no-ansi >/dev/null 2>&1; then
+    cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drupal/coder:^8.3.10"
+fi
 
 # Only for Drupal core - apply special patch
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
