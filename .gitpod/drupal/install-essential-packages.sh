@@ -6,8 +6,14 @@ set -eu -o pipefail
 : "${GITPOD_HEADLESS:=}"
 : "${DP_EXTRA_DEVEL:=}"
 : "${DP_EXTRA_ADMIN_TOOLBAR:=}"
+: "${DP_CORE_VERSION:=}"
 : "${DEVEL_PACKAGE:=}"
 : "${ADMIN_TOOLBAR_PACKAGE:=}"
+: "${CODER_PACKAGE:=drupal/coder}"
+
+if [[ "$DP_CORE_VERSION" =~ ^10(\..*)?$ ]]; then
+    CODER_PACKAGE="drupal/coder:^8.3.10"
+fi
 
 if [ -n "$DEBUG_SCRIPT" ] || [ -n "$GITPOD_HEADLESS" ]; then
     set -x
@@ -22,7 +28,7 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
 fi
 
 cd "${GITPOD_REPO_ROOT}" && time ddev . composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
-cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "drupal/coder" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE" --with-all-dependencies
+cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "drush/drush" "$CODER_PACKAGE" "$DEVEL_PACKAGE" "$ADMIN_TOOLBAR_PACKAGE" --with-all-dependencies
 
 # Only for Drupal core - apply special patch
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then

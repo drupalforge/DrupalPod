@@ -14,6 +14,7 @@ export DP_EXTRA_ADMIN_TOOLBAR=1
 
 # Adding support for composer-drupal-lenient - https://packagist.org/packages/mglaman/composer-drupal-lenient
 if [[ "$DP_CORE_VERSION" =~ ^10(\..*)?$ ]]; then
+    export ADMIN_TOOLBAR_PACKAGE="drupal/admin_toolbar:~3.5.0"
     if [ "$DP_PROJECT_TYPE" != "project_core" ]; then
         export COMPOSER_DRUPAL_LENIENT=mglaman/composer-drupal-lenient
     else

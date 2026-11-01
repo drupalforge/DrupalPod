@@ -6,8 +6,14 @@ cd "${APP_ROOT}"
 : "${DEBUG_SCRIPT:=}"
 : "${DP_EXTRA_DEVEL:=}"
 : "${DP_EXTRA_ADMIN_TOOLBAR:=}"
+: "${DP_CORE_VERSION:=}"
 : "${DEVEL_PACKAGE:=}"
 : "${ADMIN_TOOLBAR_PACKAGE:=}"
+: "${CODER_PACKAGE:=drupal/coder}"
+
+if [[ "$DP_CORE_VERSION" =~ ^10(\..*)?$ ]]; then
+    CODER_PACKAGE="drupal/coder:^8.3.10"
+fi
 
 if [ -n "$DEBUG_SCRIPT" ]; then
     set -x
@@ -22,7 +28,7 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
 fi
 
 time composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
-time composer require "drush/drush" "drupal/coder" $DEVEL_PACKAGE $ADMIN_TOOLBAR_PACKAGE --with-all-dependencies
+time composer require "drush/drush" "$CODER_PACKAGE" $DEVEL_PACKAGE $ADMIN_TOOLBAR_PACKAGE --with-all-dependencies
 
 # Only for Drupal core - apply special patch
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
