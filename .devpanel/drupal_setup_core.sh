@@ -19,10 +19,6 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ] && [ -n "$DP_ISSUE_BRANCH" ]; then
     time composer require drupal/core-recommended:* drupal/core-project-message:* drupal/core-composer-scaffold:* --no-update
 fi
 
-# Only after composer update, /web/core get symlinked to /repos/drupal/core
-# repos/drupal/core -> web/core
-time composer update --no-plugins --no-install
-
 # vendor -> repos/drupal/vendor
 if [ ! -L "$APP_ROOT"/repos/drupal/vendor ]; then
     cd "$APP_ROOT"/repos/drupal &&
