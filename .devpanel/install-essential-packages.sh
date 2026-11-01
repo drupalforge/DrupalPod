@@ -22,7 +22,7 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
 fi
 
 time composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
-time composer require "drush/drush" "drupal/coder" $DEVEL_PACKAGE $ADMIN_TOOLBAR_PACKAGE
+time composer require "drush/drush" "drupal/coder" $DEVEL_PACKAGE $ADMIN_TOOLBAR_PACKAGE --with-all-dependencies
 
 # Only for Drupal core - apply special patch
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
