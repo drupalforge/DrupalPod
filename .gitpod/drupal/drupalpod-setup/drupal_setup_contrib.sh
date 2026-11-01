@@ -22,7 +22,7 @@ chmod +x "${GITPOD_REPO_ROOT}"/repos/add-project-as-symlink.sh
 if [ -n "$COMPOSER_DRUPAL_LENIENT" ]; then
     # Add composer_drupal_lenient for modules on Drupal 10
     cd "${GITPOD_REPO_ROOT}" && ddev composer config --merge --json extra.drupal-lenient.allowed-list '["drupal/'"$DP_PROJECT_NAME"'"]'
-    cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "$COMPOSER_DRUPAL_LENIENT"
+    cd "${GITPOD_REPO_ROOT}" && time ddev . composer require "$COMPOSER_DRUPAL_LENIENT" --no-update
 fi
 # Add the project to composer (it will get the version according to the branch under `/repo/name_of_project`)
-cd "${GITPOD_REPO_ROOT}" && time ddev . composer require drupal/"$DP_PROJECT_NAME" --no-interaction --no-install
+cd "${GITPOD_REPO_ROOT}" && time ddev . composer require drupal/"$DP_PROJECT_NAME" --no-interaction --no-update

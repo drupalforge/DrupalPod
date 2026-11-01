@@ -15,6 +15,7 @@ esac
 
 # Create required composer.json and composer.lock files
 cd "$GITPOD_REPO_ROOT" && time ddev . composer create -n --no-install drupal/recommended-project:"$install_version" temp-composer-files
+rm "$GITPOD_REPO_ROOT"/temp-composer-files/composer.lock
 cp "$GITPOD_REPO_ROOT"/temp-composer-files/* "$GITPOD_REPO_ROOT"/.
 rm -rf "$GITPOD_REPO_ROOT"/temp-composer-files
 

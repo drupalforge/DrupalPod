@@ -17,6 +17,7 @@ esac
 if [ ! -f composer.json ]; then
     # Create required composer.json and composer.lock files
     time composer create-project -n --no-install drupal/recommended-project:"$install_version" temp-composer-files
+    rm "$APP_ROOT"/temp-composer-files/composer.lock
     cp "$APP_ROOT"/temp-composer-files/* "$APP_ROOT"/.
     rm -rf "$APP_ROOT"/temp-composer-files
 fi
