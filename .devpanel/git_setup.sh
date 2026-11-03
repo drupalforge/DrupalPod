@@ -14,8 +14,9 @@ cp "${APP_ROOT}"/.gitpod/drupal/templates/git-exclude.template "${APP_ROOT}"/.gi
 if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
     # Find if requested core version is dev or stable
     d="$DP_CORE_VERSION"
+    [ "$d" != "12.x" ] || d=main
     case $d in
-    *.x)
+    *.x|main)
         # If dev - use git checkout origin/*
         checkout_type=origin
         ;;
@@ -37,7 +38,7 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
     cd "${APP_ROOT}"/repos/drupal &&
         git fetch origin &&
         git fetch --all --tags &&
-        git checkout "$checkout_type"/"$DP_CORE_VERSION"
+        git checkout "$checkout_type"/"$d"
 
     # Ignore specific directories during Drupal core development
     cp "${APP_ROOT}"/.gitpod/drupal/templates/git-exclude.template "${APP_ROOT}"/.git/modules/repos/drupal/info/exclude

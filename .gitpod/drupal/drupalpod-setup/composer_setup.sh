@@ -4,8 +4,9 @@ set -eu -o pipefail
 # For versions end with x - add `-dev` suffix (ie. 9.3.x-dev)
 # For versions without x - add `~` prefix (ie. ~9.2.0)
 d="$DP_CORE_VERSION"
+[ "$d" != "12.x" ] || d=main
 case $d in
-*.x)
+*.x|main)
     install_version="$d"-dev
     ;;
 *)
@@ -39,7 +40,7 @@ ddev composer config --no-plugins allow-plugins.tbachert/spi true
 # otherwise Composer falls back to the contrib Toolbar project (Drupal 11.3+).
 # Provide it from the root project; unlike replace, this doesn't conflict with
 # newer core releases. `composer config` can't set "provide", so use jq.
-if [ "$DP_EXTRA_ADMIN_TOOLBAR" == '1' ] && [[ "$DP_CORE_VERSION" =~ ^10(\..*)?$ ]]; then
+if [ "$DP_EXTRA_ADMIN_TOOLBAR" == '1' ] && [[ "$DP_CORE_VERSION" =~ ^([8-9]|10)(\..*)?$|^11\.[0-2](\..*)?$ ]]; then
     cd "$GITPOD_REPO_ROOT" &&
         echo "$(jq '.provide["drupal/toolbar"] = "*"' composer.json --indent 4)" >composer.json
 fi

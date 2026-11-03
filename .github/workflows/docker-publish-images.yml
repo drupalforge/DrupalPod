@@ -1,24 +1,79 @@
-name: Docker build and push template
+name: Docker build and push
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      php_7_4:
+        description: 'PHP 7.4'
+        type: boolean
+        default: true
+      php_8_0:
+        description: 'PHP 8.0'
+        type: boolean
+        default: true
+      php_8_1:
+        description: 'PHP 8.1'
+        type: boolean
+        default: true
+      php_8_2:
+        description: 'PHP 8.2'
+        type: boolean
+        default: true
+      php_8_3:
+        description: 'PHP 8.3'
+        type: boolean
+        default: true
+      php_8_4:
+        description: 'PHP 8.4'
+        type: boolean
+        default: true
+      php_8_5:
+        description: 'PHP 8.5'
+        type: boolean
+        default: true
 permissions:
   actions: write
+  contents: read
+  packages: write
 jobs:
-  build-php-8_2:
-    if: github.ref_name == 'main'
-    uses: ./.github/workflows/docker-publish-image.yml
+  select-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      php: ${{ steps.select.outputs.php }}
+    steps:
+      - name: Select PHP versions
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUTS: ${{ toJSON(inputs) }}
+        run: |
+          ALL='["7.4","8.0","8.1","8.2","8.3","8.4","8.5"]'
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            PHP=$(jq -c --argjson all "$ALL" \
+              '. as $in | [$all[] | select($in["php_" + gsub("\\."; "_")] == true)]' <<< "$INPUTS")
+          else
+            PHP=$ALL
+          fi
+          if [ "$PHP" = '[]' ]; then
+            echo "::error::Select at least one PHP version."
+            exit 1
+          fi
+          echo "php=$PHP" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: select-versions
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(needs.select-versions.outputs.php) }}
+    uses: drupalforge/docker_publish_action/.github/workflows/docker-publish.yml@main
     with:
-      webserver_image: devpanel/php:8.2-base-ai
-      drupal_core_version: 10.5.4
-    secrets: inherit
-  build-php-8_3:
-    uses: ./.github/workflows/docker-publish-image.yml
-    with:
-      webserver_image: devpanel/php:8.3-base-ai
-    secrets: inherit
+      dockerhub_username: ${{ vars.DOCKERHUB_USERNAME }}
+      image_repo: drupalforge/drupalpod
+      base_image: devpanel/php:${{ matrix.php }}-base
+      image_tag: ${{ github.ref_name == github.event.repository.default_branch && format('php-{0}', matrix.php) || format('{0}-php-{1}', github.ref_name, matrix.php) }}
+      additional_tags: ${{ github.ref_name == github.event.repository.default_branch && matrix.php == '8.5' && 'latest' || '' }}
+    secrets:
+      dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}

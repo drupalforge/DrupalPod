@@ -42,3 +42,5 @@ fi
 if $PECL_UPDATED && sudo /etc/init.d/apache2 status > /dev/null; then
   sudo /etc/init.d/apache2 reload
 fi
+
+rm -rf /var/lib/apt/lists/*

@@ -103,8 +103,8 @@ if [ ! -f "${GITPOD_REPO_ROOT}"/.drupalpod_initiated ]; then
     # Enable extra modules
     cd "${GITPOD_REPO_ROOT}" &&
         ddev drush en -y \
-            "$ADMIN_TOOLBAR_NAME" \
-            "$DEVEL_NAME"
+            $ADMIN_TOOLBAR_NAME \
+            $DEVEL_NAME
 
     # Enable the requested module
     if [ "$DP_PROJECT_TYPE" == "project_module" ]; then

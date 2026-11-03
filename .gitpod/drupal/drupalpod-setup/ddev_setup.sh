@@ -5,9 +5,11 @@ set -eu -o pipefail
 major_version=$(echo "$DP_CORE_VERSION" | cut -d '.' -f 1)
 minor_version=$(echo "$DP_CORE_VERSION" | cut -d '.' -f 2)
 
-# Before Drupal 10.2, we should use php 8.2, otherwise use php 8.3
+# Before Drupal 10.2, use PHP 8.2; Drupal 12 requires PHP 8.5; otherwise use PHP 8.3.
 if (( major_version < 10 )) || { (( major_version == 10 )) && (( minor_version < 2 )); }; then
     php_version="8.2"
+elif (( major_version >= 12 )); then
+    php_version="8.5"
 else
     php_version="8.3"
 fi
