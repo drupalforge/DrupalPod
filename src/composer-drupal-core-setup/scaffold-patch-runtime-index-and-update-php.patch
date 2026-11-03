@@ -1,0 +1,18 @@
+diff --git a/index.php b/index.php
+--- a/index.php
++++ b/index.php
+@@ -13,5 +13,5 @@
+ require_once 'autoload_runtime.php';
+ 
+ return static function () {
+-  return new DrupalKernel('prod', require 'autoload.php');
++  return new DrupalKernel('prod', require 'autoload.php', TRUE, __DIR__);
+ };
+diff --git a/update.php b/update.php
+--- a/update.php
++++ b/update.php
+@@ -23,3 +23,3 @@
+ return static function () {
+-  return new UpdateKernel('prod', require 'autoload.php', FALSE);
++  return new UpdateKernel('prod', require 'autoload.php', FALSE, __DIR__);
+ };
