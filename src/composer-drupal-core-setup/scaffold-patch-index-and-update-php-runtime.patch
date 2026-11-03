@@ -1,0 +1,22 @@
+diff --git a/index.php b/index.php
+index a161ad1..fd01960 100644
+--- a/index.php
++++ b/index.php
+@@ -13,5 +13,5 @@ use Drupal\Core\DrupalKernel;
+ require_once 'autoload_runtime.php';
+ 
+ return static function () {
+-  return new DrupalKernel('prod', require 'autoload.php');
++  return new DrupalKernel('prod', require 'autoload.php', TRUE, __DIR__);
+ };
+diff --git a/update.php b/update.php
+index d1fff8e..86a40af 100644
+--- a/update.php
++++ b/update.php
+@@ -21,5 +21,5 @@ if (drupal_valid_test_ua()) {
+ }
+ 
+ return static function () {
+-  return new UpdateKernel('prod', require 'autoload.php', FALSE);
++  return new UpdateKernel('prod', require 'autoload.php', FALSE, __DIR__);
+ };
