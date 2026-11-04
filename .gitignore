@@ -1,11 +1,12 @@
 # Drupal
-/web/
-/vendor/
+/.editorconfig
+/.gitattributes
+/composer.json
+/composer.lock
 /LICENSE.*
-composer.json
-composer.lock
-.editorconfig
-.gitattributes
+/recipes/
+/vendor/
+/web/
 
 # DrupalPod
 .drupalpod_initiated
@@ -16,3 +17,9 @@ src/**/*.vsix
 src/**/.vscode-test/
 drush/
 .ddev/config.gitpod.yaml
+
+#DevPanel
+/.devpanel/dumps/
+/.vscode/
+/config/
+/private/
