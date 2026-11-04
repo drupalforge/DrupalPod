@@ -1,6 +1,7 @@
 # Drupal
 /web/
 /vendor/
+/LICENSE.*
 composer.json
 composer.lock
 .editorconfig

@@ -59,6 +59,13 @@ fi
 # Measure the time it takes to go through the script
 script_start_time=$(date +%s)
 
+# Install regardless of security audit.
+export COMPOSER_NO_AUDIT=1
+export COMPOSER_NO_BLOCKING=1
+# Keep deprecated var for compatibility with Composer versions where
+# COMPOSER_NO_BLOCKING/--no-blocking is not supported yet.
+export COMPOSER_NO_SECURITY_BLOCKING=1
+
 # Remove root-owned files.
 sudo rm -rf $APP_ROOT/lost+found
 
@@ -83,6 +90,20 @@ time "${DIR}"/install-essential-packages.sh
 # Configure phpcs for drupal.
 cd "$APP_ROOT" &&
     vendor/bin/phpcs --config-set installed_paths vendor/drupal/coder/coder_sniffer
+
+#== Create the private files directory.
+if [ ! -d private ]; then
+  echo
+  echo 'Create the private files directory.'
+  time mkdir -m 2775 private
+fi
+
+#== Create the config sync directory.
+if [ ! -d config/sync ]; then
+  echo
+  echo 'Create the config sync directory.'
+  time mkdir -pm 2775 config/sync
+fi
 
 if [ -z "$(drush status --field=db-status)" ] || \
    [ $DP_INSTALL_PROFILE != 'demo_umami' ] || \
@@ -119,7 +140,23 @@ if [ "$DP_PROJECT_TYPE" == "project_theme" ]; then
     cd "${APP_ROOT}" && drush config-set -y system.theme default "$DP_PROJECT_NAME"
 fi
 
-# Finish measuring script time.
+#== Warm up caches.
+echo
+echo 'Run cron.'
+time drush cron
+echo
+echo 'Populate caches.'
+time drush cache:warm &> /dev/null || :
+time .devpanel/warm
+time .devpanel/warm /user/login
+
+#== Fix ownership for strict permissions.
+echo
+echo 'Fix ownership for strict permissions.'
+time sudo chmod 2775 -R web/sites/default/files private config/sync
+time sudo chown -R ${APACHE_RUN_USER:=www-data}:${APACHE_RUN_GROUP:=www-data} web/sites/default/files private config/sync
+
+#== Finish measuring script time.
 script_end_time=$(date +%s)
 runtime=$((script_end_time - script_start_time))
 echo "init.sh script ran for" $runtime "seconds"
