@@ -31,3 +31,7 @@ if [ "${DP_CORE_VERSION%%.*}" -gt 10 ]; then
         export COMPOSER_DRUPAL_LENIENT=''
     fi
 fi
+if [ "${DP_CORE_VERSION%%.*}" -gt 11 ]; then
+    # devel is not yet compatible with Drupal 12.
+    export DP_EXTRA_DEVEL=
+fi
