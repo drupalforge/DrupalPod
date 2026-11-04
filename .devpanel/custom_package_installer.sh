@@ -13,10 +13,8 @@ if [ -n "$DEBUG_SCRIPT" ]; then
 fi
 
 # Install APT packages.
-if ! command -v direnv >/dev/null 2>&1; then
-  apt-get update
-  apt-get install -y direnv jq nano npm ripgrep
-fi
+apt-get update
+apt-get install -y direnv jq nano npm ripgrep
 
 # Enable direnv in Bash shells and silence its startup log lines.
 if ! grep -Fq '# DevPanel direnv configuration.' /etc/bash.bashrc; then
