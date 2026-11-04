@@ -62,10 +62,11 @@ if $PECL_UPDATED && /etc/init.d/apache2 status > /dev/null; then
 fi
 
 # Install the DrupalPod VS Code extension for code-server.
-DRUPALPOD_EXT=drupal-mentoring.drupalpod-ext
-if command -v code-server >/dev/null 2>&1 && [ -n "${CODES_USER_DATA_DIR:-}" ] \
-  && [ -z "$(find "$CODES_USER_DATA_DIR/extensions/" -maxdepth 1 -iname "${DRUPALPOD_EXT}-*" -type d 2>/dev/null)" ]; then
-  runuser -u "${SUDO_USER:-$USER}" -- code-server --install-extension "$DRUPALPOD_EXT" --user-data-dir="$CODES_USER_DATA_DIR"
+if [[ "$CODES_ENABLE" == "yes" ]]; then
+  DRUPALPOD_EXT=drupal-mentoring.drupalpod-ext
+  if [ -z "$(find "$CODES_USER_DATA_DIR/extensions/" -maxdepth 1 -iname "${DRUPALPOD_EXT}-*" -type d 2>/dev/null)" ]; then
+    sudo -u "${SUDO_USER:-$USER}" -E -- code-server --install-extension "$DRUPALPOD_EXT" --user-data-dir="$CODES_USER_DATA_DIR"
+  fi
 fi
 
 if [ -f "$APP_ROOT/.devpanel/crontab" ]; then
