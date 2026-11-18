@@ -11,7 +11,7 @@ composer config --no-plugins repositories.drupal-core5 '{"type": "path", "url": 
 composer config --no-plugins repositories.drupal-core6 '{"type": "path", "url": "repos/drupal/composer/Plugin/VendorHardening"}'
 
 # Removing the conflict part of composer
-echo "$(cat composer.json | jq 'del(.conflict)' --indent 4)" >composer.json
+echo "$(cat composer.json | jq 'del(.conflict["drupal/drupal"])' --indent 4)" >composer.json
 
 # If a core issue branch was chosen, we want the version of Drupal core that is in that issue branch
 # This is very helpful for issues that started with previous Drupal core versions, and the issue version automatically got updated to latest current drupal version

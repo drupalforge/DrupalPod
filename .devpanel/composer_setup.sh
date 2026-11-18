@@ -20,6 +20,9 @@ if [ ! -f composer.json ]; then
     time composer create-project -n --no-install drupal/recommended-project:"$install_version" temp-composer-files
     rm "$APP_ROOT"/temp-composer-files/composer.lock
     cp "$APP_ROOT"/temp-composer-files/* "$APP_ROOT"/.
+    # Some versions of consolidation/robo misstate their requirements.
+    jq '.conflict["consolidation/robo"] = "~5.2.0 <5.2.4"' "$APP_ROOT"/composer.json > "$APP_ROOT"/temp-composer-files/composer.json
+    cp "$APP_ROOT"/temp-composer-files/composer.json "$APP_ROOT"/.
     rm -rf "$APP_ROOT"/temp-composer-files
 fi
 

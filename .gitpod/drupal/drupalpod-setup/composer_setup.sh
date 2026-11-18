@@ -18,6 +18,9 @@ esac
 cd "$GITPOD_REPO_ROOT" && time ddev . composer create -n --no-install drupal/recommended-project:"$install_version" temp-composer-files
 rm "$GITPOD_REPO_ROOT"/temp-composer-files/composer.lock
 cp "$GITPOD_REPO_ROOT"/temp-composer-files/* "$GITPOD_REPO_ROOT"/.
+# Some versions of consolidation/robo misstate their requirements.
+jq '.conflict["consolidation/robo"] = "~5.2.0 <5.2.4"' "$GITPOD_REPO_ROOT"/composer.json > "$GITPOD_REPO_ROOT"/temp-composer-files/composer.json
+cp "$GITPOD_REPO_ROOT"/temp-composer-files/composer.json "$GITPOD_REPO_ROOT"/.
 rm -rf "$GITPOD_REPO_ROOT"/temp-composer-files
 
 # Programmatically fix Composer 2.2 allow-plugins to avoid errors
