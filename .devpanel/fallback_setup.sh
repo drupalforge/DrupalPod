@@ -21,9 +21,9 @@ if [ -z "${DP_CORE_VERSION:-}" ]; then
         ;;
     *)
         if php -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);'; then
-            DP_CORE_VERSION=11.4.11
+            DP_CORE_VERSION=11.4.13
         else
-            DP_CORE_VERSION=10.6.20
+            DP_CORE_VERSION=10.6.22
         fi
         echo "Could not determine the latest Drupal core release; using $DP_CORE_VERSION." >&2
         ;;
