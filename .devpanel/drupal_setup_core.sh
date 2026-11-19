@@ -10,8 +10,8 @@ composer config --no-plugins repositories.drupal-core4 '{"type": "path", "url": 
 composer config --no-plugins repositories.drupal-core5 '{"type": "path", "url": "repos/drupal/composer/Plugin/ProjectMessage"}'
 composer config --no-plugins repositories.drupal-core6 '{"type": "path", "url": "repos/drupal/composer/Plugin/VendorHardening"}'
 
-# Removing the conflict part of composer
-echo "$(cat composer.json | jq 'del(.conflict)' --indent 4)" >composer.json
+# Allow the Drupal core checkout while preserving other package conflicts.
+echo "$(jq 'del(.conflict["drupal/drupal"])' composer.json --indent 4)" >composer.json
 
 # If a core issue branch was chosen, we want the version of Drupal core that is in that issue branch
 # This is very helpful for issues that started with previous Drupal core versions, and the issue version automatically got updated to latest current drupal version
