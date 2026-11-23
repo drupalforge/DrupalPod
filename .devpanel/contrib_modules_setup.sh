@@ -22,16 +22,16 @@ if [[ "$DP_CORE_VERSION" =~ ^10(\..*)?$ ]]; then
 fi
 
 # Adding support for composer-drupal-lenient - https://packagist.org/packages/mglaman/composer-drupal-lenient
-if [ "${DP_CORE_VERSION%%.*}" -gt 10 ]; then
-    # admin_toolbar is not needed after Drupal 10.
-    export DP_EXTRA_ADMIN_TOOLBAR=
+if [ "$DP_CORE_VERSION" = main ] || [ "${DP_CORE_VERSION%%.*}" -gt 10 ]; then
     if [ "$DP_PROJECT_TYPE" != "project_core" ]; then
         export COMPOSER_DRUPAL_LENIENT=mglaman/composer-drupal-lenient
     else
         export COMPOSER_DRUPAL_LENIENT=''
     fi
+    # admin_toolbar is not needed after Drupal 10.
+    export DP_EXTRA_ADMIN_TOOLBAR=
 fi
-if [ "${DP_CORE_VERSION%%.*}" -gt 11 ]; then
+if [ "$DP_CORE_VERSION" = main ] || [ "${DP_CORE_VERSION%%.*}" -gt 11 ]; then
     # devel is not yet compatible with Drupal 12.
     export DP_EXTRA_DEVEL=
 fi

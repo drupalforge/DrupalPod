@@ -33,6 +33,10 @@ on:
         description: 'PHP 8.5'
         type: boolean
         default: true
+      php_8_6:
+        description: 'PHP 8.6'
+        type: boolean
+        default: true
 permissions:
   actions: write
   contents: read
@@ -49,7 +53,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUTS: ${{ toJSON(inputs) }}
         run: |
-          ALL='["7.4","8.0","8.1","8.2","8.3","8.4","8.5"]'
+          ALL='["7.4","8.0","8.1","8.2","8.3","8.4","8.5","8.6"]'
           if [ "$EVENT_NAME" = workflow_dispatch ]; then
             PHP=$(jq -c --argjson all "$ALL" \
               '. as $in | [$all[] | select($in["php_" + gsub("\\."; "_")] == true)]' <<< "$INPUTS")

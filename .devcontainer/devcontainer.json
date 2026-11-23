@@ -1,0 +1,11 @@
+{
+    "name": "DrupalPod (PHP 8.6)",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/var/www/html",
+    "shutdownAction": "stopCompose",
+	"forwardPorts": [
+		80
+	],
+    "remoteUser": "www"
+}
