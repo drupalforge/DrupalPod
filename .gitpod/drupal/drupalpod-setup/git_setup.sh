@@ -17,22 +17,22 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
     # Find if requested core version is dev or stable
     d="$DP_CORE_VERSION"
     [ "$d" != "12.x" ] || d=main
-    case $d in
-    *.x|main)
-        # If dev - use git checkout origin/*
-        checkout_type=origin
-        ;;
-    *)
-        # stable - use git checkout tags/*
-        checkout_type=tags
-        ;;
-    esac
-
-    # Use origin or tags in git checkout command
+    # Fetch refs before selecting the development branch or release tag.
     cd "${GITPOD_REPO_ROOT}"/repos/drupal &&
         git fetch origin &&
-        git fetch --all --tags &&
-        git checkout "$checkout_type"/"$d"
+        git fetch --all --tags
+
+    cd "${GITPOD_REPO_ROOT}"/repos/drupal &&
+        case $d in
+        *.x|main)
+            git checkout "$d" &&
+                git branch --set-upstream-to "origin/$d" &&
+                git merge --ff-only "origin/$d"
+            ;;
+        *)
+            git checkout "tags/$d"
+            ;;
+        esac
 
     # Ignore specific directories during Drupal core development
     cp "${GITPOD_REPO_ROOT}"/.gitpod/drupal/templates/git-exclude.template "${GITPOD_REPO_ROOT}"/repos/drupal/.git/info/exclude

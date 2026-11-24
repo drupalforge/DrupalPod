@@ -42,6 +42,13 @@ convert_version() {
 # echo $(convert_version "10.1.0-beta1")  # Output: 10.1.x
 # echo $(convert_version "11.0-dev")      # Output: 11.x
 
+# Record the image's core version before git_setup.sh changes the checkout.
+DP_CORE_SUBMODULE_VERSION=$(
+    git -C "${APP_ROOT}/repos/drupal" symbolic-ref --quiet --short HEAD ||
+        git -C "${APP_ROOT}/repos/drupal" describe --tags --exact-match HEAD
+)
+DP_CORE_SUBMODULE_MAJOR_VERSION=${DP_CORE_SUBMODULE_VERSION%%.*}
+
 # Set a default setup if project type wasn't specified
 if [ -z "$DP_PROJECT_TYPE" ]; then
     source "$DIR/fallback_setup.sh"
@@ -55,6 +62,8 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ] && [ -n "$DP_ISSUE_FORK" ]; then
     DP_CORE_VERSION=$(convert_version "$VERSION_FROM_GIT")
     export DP_CORE_VERSION
 fi
+DP_CORE_MAJOR_VERSION=${DP_CORE_VERSION%%.*}
+[ "$DP_CORE_MAJOR_VERSION" != '12' ] || DP_CORE_MAJOR_VERSION=main
 
 # Measure the time it takes to go through the script
 script_start_time=$(date +%s)
@@ -107,10 +116,12 @@ fi
 
 if [ -z "$(drush status --field=db-status)" ] || \
    [ $DP_INSTALL_PROFILE != 'demo_umami' ] || \
-   ! printf "11.2.2\n$DP_CORE_VERSION" | sort -C; then
-    # New site install, different install profile, or lower core version.
+   [ "$DP_CORE_MAJOR_VERSION" != "$DP_CORE_SUBMODULE_MAJOR_VERSION" ] || \
+   ! printf "$DP_CORE_SUBMODULE_VERSION\n$DP_CORE_VERSION" | sort -C; then
+    # New site install, different install profile, core major change, or lower
+    # core version.
     time drush -n si --account-pass=admin --site-name="DrupalPod" "$DP_INSTALL_PROFILE"
-elif [ $DP_CORE_VERSION != '11.2.2' ]; then
+elif [ "$DP_CORE_VERSION" != "$DP_CORE_SUBMODULE_VERSION" ]; then
     # Run database updates if the core version is different.
     time drush -n updb
 fi

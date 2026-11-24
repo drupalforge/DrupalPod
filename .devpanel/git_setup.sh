@@ -15,17 +15,6 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
     # Find if requested core version is dev or stable
     d="$DP_CORE_VERSION"
     [ "$d" != "12.x" ] || d=main
-    case $d in
-    *.x|main)
-        # If dev - use git checkout origin/*
-        checkout_type=origin
-        ;;
-    *)
-        # stable - use git checkout tags/*
-        checkout_type=tags
-        ;;
-    esac
-
     # Clone Drupal core repo
     if git submodule status repos/drupal > /dev/null 2>&1; then
         time git submodule update --init --recursive
@@ -34,11 +23,22 @@ if [ "$DP_PROJECT_TYPE" == "project_core" ]; then
         time git config -f .gitmodules submodule."repos/drupal".ignore dirty
     fi
 
-    # Use origin or tags in git checkout command
+    # Fetch refs before selecting the development branch or release tag.
     cd "${APP_ROOT}"/repos/drupal &&
         git fetch origin &&
-        git fetch --all --tags &&
-        git checkout "$checkout_type"/"$d"
+        git fetch --all --tags
+
+    cd "${APP_ROOT}"/repos/drupal &&
+        case $d in
+        *.x|main)
+            git checkout "$d" &&
+                git branch --set-upstream-to "origin/$d" &&
+                git merge --ff-only "origin/$d"
+            ;;
+        *)
+            git checkout "tags/$d"
+            ;;
+        esac
 
     # Ignore specific directories during Drupal core development
     cp "${APP_ROOT}"/.gitpod/drupal/templates/git-exclude.template "${APP_ROOT}"/.git/modules/repos/drupal/info/exclude
