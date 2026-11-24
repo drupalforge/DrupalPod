@@ -21,7 +21,11 @@ if [ "$DP_EXTRA_ADMIN_TOOLBAR" != '1' ]; then
     ADMIN_TOOLBAR_PACKAGE=
 fi
 
-time composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 --no-update
+# drupal/core-dev may fail to install on PHP 8.6. Even if dev requirements
+# are not installed, they still determine whether installation can succeed.
+time composer require --dev "drupal/core-dev":* "phpspec/prophecy-phpunit":^2 ||
+    time composer remove "drupal/core-dev" ||
+    :
 # Drush 15 no longer supports the drush command.
 time composer require "drush/drush:<15" $DEVEL_PACKAGE $ADMIN_TOOLBAR_PACKAGE
 
