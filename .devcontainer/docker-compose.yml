@@ -14,4 +14,4 @@ services:
       file: base/docker-compose.app.yml
       service: init-source-code
     volumes:
-      - "..:/var/www/html"
+      - "..:/var/www/build"
